@@ -77,6 +77,8 @@ export default class VideoPlayer extends Component {
          */
         this.methods = {
             onBack: this.props.onBack || this._onBack.bind( this ),
+            onPlay: this.props.onPlay,
+            onPause: this.props.onPause,
             toggleFullscreen: this._toggleFullscreen.bind( this ),
             togglePlayPause: this._togglePlayPause.bind( this ),
             toggleControls: this._toggleControls.bind( this ),
@@ -398,6 +400,15 @@ export default class VideoPlayer extends Component {
     _togglePlayPause() {
         let state = this.state;
         state.paused = ! state.paused;
+        if (state.paused) {
+            if (this.methods.onPause) {
+                this.methods.onPause();
+            }
+        } else {
+            if (this.methods.onPlay) {
+                this.methods.onPlay();
+            }
+        }
         this.setState( state );
     }
 
@@ -594,7 +605,15 @@ export default class VideoPlayer extends Component {
         return this.player.volumeWidth / this.state.volume;
     }
 
-
+    generateStateFromProps(props) {
+        return {
+            resizeMode: props.resizeMode || 'contain',
+            paused: props.paused || false,
+            muted: props.muted || false,
+            volume: props.volume || 1,
+            rate: props.rate || 1,
+        };
+    }
 
     /*------------------------------------------------------
     | React Component functions
@@ -626,6 +645,10 @@ export default class VideoPlayer extends Component {
         state.volumeOffset = position;
 
         this.setState( state );
+    }
+
+    componentWillReceiveProps(nextProps) {
+        this.setState(this.generateStateFromProps(nextProps));
     }
 
     /**
@@ -802,6 +825,10 @@ export default class VideoPlayer extends Component {
      * Back button control
      */
     renderBack() {
+        // Don't render the back button if there's nothing we can do with it!
+        if (!this.props.navigator && !this.props.onBack) {
+            return <View/>;
+        }
         return this.renderControl(
             <Image
                 source={ require( './assets/img/back.png' ) }
@@ -845,6 +872,9 @@ export default class VideoPlayer extends Component {
      * Render fullscreen toggle and set icon based on the fullscreen state.
      */
     renderFullscreen() {
+        if (!this.props.showFullscreenButton) {
+            return null;
+        }
         let source = this.state.isFullscreen === true ? require( './assets/img/shrink.png' ) : require( './assets/img/expand.png' );
         return this.renderControl(
             <Image source={ source } />,
