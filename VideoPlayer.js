@@ -7,6 +7,7 @@ import {
     StyleSheet,
     Touchable,
     Animated,
+    Platform,
     Easing,
     Image,
     View,
@@ -150,6 +151,10 @@ export default class VideoPlayer extends Component {
         state.loading = true;
         this.loadAnimation();
         this.setState( state );
+
+        if ( typeof this.props.onLoadStart === 'function' ) {
+            this.props.onLoadStart(...arguments);
+        }
     }
 
     /**
@@ -169,6 +174,10 @@ export default class VideoPlayer extends Component {
         if ( state.showControls ) {
             this.setControlTimeout();
         }
+
+        if ( typeof this.props.onLoad === 'function' ) {
+            this.props.onLoad(...arguments);
+        }
     }
 
     /**
@@ -184,6 +193,10 @@ export default class VideoPlayer extends Component {
         if ( ! state.seeking ) {
             const position = this.calculateSeekerPosition();
             this.setSeekerPosition( position );
+        }
+
+        if ( typeof this.props.onProgress === 'function' ) {
+            this.props.onProgress(...arguments);
         }
 
         this.setState( state );
@@ -1050,6 +1063,7 @@ export default class VideoPlayer extends Component {
             >
                 <View style={[ styles.player.container, this.styles.containerStyle ]}>
                     <Video
+                        {...this.props}
                         ref={ videoPlayer => this.player.ref = videoPlayer }
 
                         resizeMode={ this.state.resizeMode }
@@ -1058,9 +1072,7 @@ export default class VideoPlayer extends Component {
                         muted={ this.state.muted }
                         rate={ this.state.rate }
 
-                        playInBackground={ this.opts.playInBackground }
-                        playWhenInactive={ this.opts.playWhenInactive }
-                        repeat={ this.opts.repeat }
+                        { ...this.props }
 
                         onLoadStart={ this.events.onLoadStart }
                         onProgress={ this.events.onProgress }
@@ -1090,11 +1102,12 @@ export default class VideoPlayer extends Component {
 const styles = {
     player: StyleSheet.create({
         container: {
-            flex: 1,
+            flex: Platform.OS === 'ios' ? 1 : null,
             alignSelf: 'stretch',
             justifyContent: 'space-between',
         },
         video: {
+            overflow: 'hidden',
             position: 'absolute',
             top: 0,
             right: 0,
@@ -1180,7 +1193,7 @@ const styles = {
             justifyContent: 'center',
             zIndex: 100,
             marginTop: 24,
-            marginBottom: 0,
+            marginBottom: 8
         },
         topControlGroup: {
             alignSelf: 'stretch',
@@ -1198,7 +1211,7 @@ const styles = {
             flexDirection: 'row',
             marginLeft: 12,
             marginRight: 12,
-            marginBottom: 0,
+            marginBottom: 0
         },
         volume: {
             flexDirection: 'row',
@@ -1207,7 +1220,9 @@ const styles = {
             flexDirection: 'row',
         },
         playPause: {
+            position: 'relative',
             width: 80,
+            zIndex: 0
         },
         title: {
             alignItems: 'center',
